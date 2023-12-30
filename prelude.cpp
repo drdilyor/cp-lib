@@ -113,10 +113,11 @@ void init(string fileio = "") {
     cin.tie(0)->sync_with_stdio(0);
     cin.exceptions(cin.failbit | cin.eofbit);
     cout << std::fixed << std::setprecision(12);
+    preprocess();
 }
 
 void test_multi() {
-    preprocess();
+    init();
     int t;
     cin >> t;
     while (t-- && cin) {
@@ -128,7 +129,7 @@ void test_multi() {
 }
 
 void test_single() {
-    preprocess();
+    init();
 #ifdef ONPC
     while (true) {
         if (solve()) break;

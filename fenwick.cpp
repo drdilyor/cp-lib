@@ -5,7 +5,7 @@
 namespace my::fenwick {
 using std::vector;
 
-template <typename T>
+template <typename T = long long>
 class fenwick {
   public:
     fenwick() : fenwick(0) {
@@ -40,7 +40,7 @@ class fenwick {
     }
 };
 
-template <typename T>
+template <typename T = long long>
 class fenwickrange {
   public:
     fenwickrange() : f() {
@@ -48,7 +48,7 @@ class fenwickrange {
     fenwickrange(int n) : f(n) {
     }
 
-    void add(int l, int r, int x) {
+    void add(int l, int r, T x) {
         f.add(l, +x);
         if (r != f.n - 1) f.add(r + 1, -x);
     }

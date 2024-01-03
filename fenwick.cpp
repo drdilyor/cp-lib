@@ -60,7 +60,54 @@ class fenwickrange {
   private:
     fenwick<T> f;
 };
+
+class fenwickset {
+  public:
+    fenwickset() : n(0), f() {
+    }
+    fenwickset(int n) : n(n), f(n) {
+    }
+
+    void insert(int x) {
+        f.add(x, +1);
+    }
+    void erase(int x) {
+        f.add(x, -count(x));
+    }
+    void erase_single(int x) {
+        f.add(x, -1);
+    }
+    int count(int x) const {
+        return f.sum(x, x);
+    }
+    int size() const {
+        return f.sum(0, n-1);
+    }
+
+    int order_of_key(int x) const {
+        return f.sum(0, x - 1);
+    }
+
+    int find_by_order(int k) const {
+        int l = -1, r = n;
+        while (l < r - 1) {
+            int mid = (l + r) / 2;
+            if (f.sum(0, mid) <= k) {
+                l = mid;
+            } else {
+                r = mid;
+            }
+        }
+        return r == n ? -1 : r;
+    }
+
+  private:
+    int n;
+    fenwick<int> f;
+};
+
 } // namespace my::fenwick
 
 using my::fenwick::fenwick;
 using my::fenwick::fenwickrange;
+using my::fenwick::fenwickset;

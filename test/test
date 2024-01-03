@@ -1,4 +1,6 @@
 #!/usr/bin/bash
+cd $(dirname "$0")
+
 ulimit -s 67108864
 for file in segtree fenwick dsu; do
   cpt cc $file.cpp || exit 1

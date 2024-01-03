@@ -4,14 +4,15 @@
 using namespace std;
 mt19937 rng(12);
 
-template <typename node, typename gen_t>
+template <typename node_t, typename gen_t>
 void test_correctness(int n, int q, gen_t gen) {
-    segtree<node> st(n);
-    vector<typename node::type> arr(n, node::e());
+    node_t node;
+    segtree<node_t> st(n);
+    vector<typename node_t::type> arr(n, node.e());
     for (int i = 0; i < q; i++) {
 
         int p = rng() % n;
-        typename node::type x = gen();
+        typename node_t::type x = gen();
         st.set(p, x);
         arr[p] = x;
 
@@ -19,9 +20,9 @@ void test_correctness(int n, int q, gen_t gen) {
         if (r == n) r = l;
         if (l > r) swap(l, r);
         auto ans1 = st.prod(l, r);
-        auto ans2 = node::e();
+        auto ans2 = node.e();
         for (int i = l; i <= r; i++) {
-            ans2 = node::op(ans2, arr[i]);
+            ans2 = node.op(ans2, arr[i]);
         }
         assert(ans1 == ans2);
     }
@@ -34,9 +35,48 @@ void test_for_node(gen_t gen) {
             printf("n=%5d q=%5d ", n, q);
             cout << flush;
             test_correctness<node>(n, q, gen);
-            cout << "PASSED" << "\r" << flush;
+            cout << "PASSED"
+                 << "\r" << flush;
         }
     }
+}
+
+struct custom_node {
+    static constexpr int mod = 1e9 + 7;
+
+    using type = array<int, 2>;
+    type e() {
+        return {1, 0};
+    }
+    type op(type a, type b) {
+        type res;
+        res[0] = ((long long)a[0] * b[0]) % mod;
+        res[1] = ((long long)a[1] * b[0] + b[1]) % mod;
+        return res;
+    }
+};
+
+void test_lambda() {
+    const int n = 100;
+    cout << "custom lambda " << flush;
+
+    vector<int> perm{0, 2, 3, 1};
+    auto merge = [&perm](int a, int b) { return perm[a] * perm[b] % perm.size(); };
+
+    segtree st(n, node::custom(0, merge));
+    vector<int> arr(n);
+    auto dist = uniform_int_distribution<int>(0, perm.size()-1);
+    for (int i = 0; i < n; i++) {
+        st.set(i, arr[i] = dist(rng));
+    }
+    for (int i = 0; i < n; i++) {
+        int prod = 0;
+        for (int j = i; j < n; j++) {
+            prod = merge(prod, arr[i]);
+            assert(st.prod(i, j) == prod);
+        }
+    }
+    cout << "PASSED\r" << flush;
 }
 
 void test() {
@@ -54,6 +94,13 @@ void test() {
 
     test_for_node<node::sum<long long>>(
         []() { return uniform_int_distribution<long long>(-inf, inf)(rng); });
+
+    test_for_node<custom_node>([]() {
+        auto dist = uniform_int_distribution<int>(0, custom_node::mod - 1);
+        return custom_node::type{{dist(rng), dist(rng)}};
+    });
+
+    test_lambda();
 }
 
 int main() {

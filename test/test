@@ -1,6 +1,7 @@
 #!/usr/bin/bash
-for file in segtree fenwick; do
-  cpt c $file.cpp
-  cpt r
+ulimit -s 67108864
+for file in segtree fenwick dsu; do
+  cpt cc $file.cpp || exit 1
+  ./a.out || exit 1
 done
 rm a.out

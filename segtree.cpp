@@ -125,7 +125,19 @@ class segtree {
         return t[1];
     }
 
-    // TODO: implement first_left and first_right
+    // F :: (Acc, S) -> (bool, S)
+    // F(a, e) = a
+    // if !right: F(F(a, l), r) = F(a, op(l, r))
+    // otherwise: F(F(a, r), l) = F(a, op(l, r))
+    template <typename Acc, typename F>
+    int first_leftmost(int l, int r, Acc a, F f) {
+        return find_first<Acc, F, false>(l, r, a, f);
+    }
+
+    template <typename Acc, typename F>
+    int first_rightmost(int l, int r, Acc a, F f) {
+        return find_first<Acc, F, true>(l, r, a, f);
+    }
 
   private:
     int n = 0;
@@ -136,6 +148,65 @@ class segtree {
 
     void pull(int i) {
         t[i] = node.op(t[i * 2], t[i * 2 + 1]);
+    }
+
+    template <typename Acc, typename F, bool right>
+    int find_first(int l, int r, Acc a, F f) {
+        static_assert(std::is_convertible_v<
+                          F, std::function<std::pair<bool, Acc>(Acc, S)>> ||
+                          std::is_convertible_v<
+                              F, std::function<std::pair<bool, Acc>(Acc, S&)>>,
+                      "f must behave as pair<bool, Acc>(Acc, S)");
+
+        l += size;
+        r += size;
+        int lnodes[30], rnodes[30];
+        int lp = 0, rp = 0;
+        while (l <= r) {
+            if (l % 2 == 1) lnodes[lp++] = l++;
+            if (r % 2 == 0) rnodes[rp++] = r--;
+            l >>= 1, r >>= 1;
+        }
+        int *lv = lnodes, *rv = rnodes;
+        if constexpr (right) {
+            std::swap(lp, rp);
+            std::swap(lv, rv);
+        }
+
+        for (int i = 0; i < lp; i++) {
+            auto [b, k] = find_in_range<Acc, F, right>(lv[i], a, f);
+            if (k != -1) return k;
+            a = b;
+        }
+        for (int i = rp - 1; i >= 0; i--) {
+            auto [b, k] = find_in_range<Acc, F, right>(rv[i], a, f);
+            if (k != -1) return k;
+            a = b;
+        }
+        return -1;
+    }
+
+    template <typename Acc, typename F, bool right>
+    std::pair<Acc, int> find_in_range(int v, Acc a, F f) {
+        auto [ok, b] = f(a, t[v]);
+        if (!ok) return {b, -1};
+
+        while (v < size) {
+            if constexpr (!right) {
+                auto [ok, b] = f(a, t[v * 2]);
+                if (ok) v = v * 2;
+                else v = v * 2 + 1;
+                a = b;
+            } else {
+                auto [ok, b] = f(a, t[v * 2 + 1]);
+                if (ok) v = v * 2 + 1;
+                else v = v * 2;
+                a = b;
+            }
+        }
+        a = f(a, t[v]).second;
+        if (v >= size + n) return {a, -1};
+        return {a, v - size};
     }
 };
 } // namespace my::segtree

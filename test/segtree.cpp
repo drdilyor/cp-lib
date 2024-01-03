@@ -61,11 +61,13 @@ void test_lambda() {
     cout << "custom lambda " << flush;
 
     vector<int> perm{0, 2, 3, 1};
-    auto merge = [&perm](int a, int b) { return perm[a] * perm[b] % perm.size(); };
+    auto merge = [&perm](int a, int b) {
+        return perm[a] * perm[b] % perm.size();
+    };
 
     segtree st(n, node::custom(0, merge));
     vector<int> arr(n);
-    auto dist = uniform_int_distribution<int>(0, perm.size()-1);
+    auto dist = uniform_int_distribution<int>(0, perm.size() - 1);
     for (int i = 0; i < n; i++) {
         st.set(i, arr[i] = dist(rng));
     }
@@ -74,6 +76,41 @@ void test_lambda() {
         for (int j = i; j < n; j++) {
             prod = merge(prod, arr[i]);
             assert(st.prod(i, j) == prod);
+        }
+    }
+    cout << "PASSED\r" << flush;
+}
+
+void test_fold(int p, int q) {
+    const int n = 100;
+    cout << "folding ";
+    printf("p=%3d q=%3d ", p, q);
+    cout << flush;
+
+    segtree<node::sum<int>> st(n);
+    auto nth = [](int k, int cnt) -> pair<bool, int> {
+        if (k < cnt) return {true, k};
+        return {false, k - cnt};
+    };
+
+    for (int i = 0; i < n; i++) {
+        st.set(i, rng() % (p + q) <= p);
+    }
+    for (int s = 0; s < n; s++) {
+        {
+            int i = rng() % n;
+            st.set(i, st.prod(i, i) ^ 1);
+        }
+        for (int i = 2; i < n - 2; i++) {
+            for (int k = 0; k <= n; k++) {
+                int j = st.first_leftmost(i, n - 1, k, nth);
+                if (j == -1) assert(k >= st.prod(i, n - 1));
+                else assert(st.prod(i, j - 1) == k && st.prod(i, j) == k + 1);
+
+                j = st.first_rightmost(0, i, k, nth);
+                if (j == -1) assert(k >= st.prod(0, i));
+                else assert(st.prod(j + 1, i) == k && st.prod(j, i) == k + 1);
+            }
         }
     }
     cout << "PASSED\r" << flush;
@@ -101,6 +138,10 @@ void test() {
     });
 
     test_lambda();
+
+    test_fold(20, 1);
+    test_fold(1, 1);
+    test_fold(1, 20);
 }
 
 int main() {
@@ -109,5 +150,5 @@ int main() {
     auto end = chrono::high_resolution_clock::now();
     cout << "segtree PASSED in "
          << chrono::duration_cast<chrono::milliseconds>(end - start).count()
-         << "ms" << endl;
+         << "ms                " << endl;
 }

@@ -43,21 +43,22 @@ class fenwick {
 template <typename T = long long>
 class fenwickrange {
   public:
-    fenwickrange() : f() {
+    fenwickrange() : n(0), f() {
     }
-    fenwickrange(int n) : f(n) {
+    fenwickrange(int n) : n(n), f(n) {
     }
 
     void add(int l, int r, T x) {
         f.add(l, +x);
-        if (r != f.n - 1) f.add(r + 1, -x);
+        if (r != n - 1) f.add(r + 1, -x);
     }
 
     T get(int p) {
-        return f.sum(p);
+        return f.sum(0, p);
     }
 
   private:
+    int n;
     fenwick<T> f;
 };
 

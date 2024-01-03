@@ -28,9 +28,8 @@ struct DSU {
     }
 };
 
-template <typename T>
 void test_correctness(int n) {
-    dsu<T> a(n);
+    dsu a(n);
     DSU b(n);
     if (!n) return;
     uniform_int_distribution<int> dist(0, n-1);
@@ -46,20 +45,14 @@ void test_correctness(int n) {
     }
 }
 
-template <typename tag>
-void test_for_tag() {
+void test() {
     for (int n : vector{0, 1, 2, 100, 10'000}) {
         printf("n=%5d ", n);
         cout << flush;
-        test_correctness<tag>(n);
+        test_correctness(n);
         cout << "PASSED"
              << "\r" << flush;
     }
-}
-
-void test() {
-    test_for_tag<tag::by_size>();
-    test_for_tag<tag::save_set>(); // TODO: make test stronger
 }
 
 int main() {

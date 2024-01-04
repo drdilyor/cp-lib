@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #include <segtree.cpp>
+#error "segtree test should be updated"
 
 using namespace std;
 mt19937 rng(12);

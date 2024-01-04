@@ -209,11 +209,11 @@ auto compose_simple_update = [](SimpleUpdate last, SimpleUpdate first) {
 };
 
 template <class Base, class Node, class Make, class Op>
-auto segtree_nonlazy(const std::vector<Base>& v, Node id_node, Make make, Op op,
-                     Base id_update = {}) {
-    auto update_set = [](Base upd, Base) { return upd; };
-    return segtree<Base, Node, Base, Make, Op, decltype(update_set)>(
-        v, id_node, make, op, id_update, update_set);
+auto segtree_nonlazy(const std::vector<Base>& v, Node id_node, Make make,
+                     Op op) {
+    auto monoapply = [](std::monostate, const Base& b) { return b; };
+    return segtree<Base, Node, std::monostate, Make, Op, decltype(monoapply)>(
+        v, id_node, make, op, std::monostate{}, monoapply);
 }
 
 template <class Base, class Node, class Make, class Op, class App>
@@ -261,9 +261,11 @@ auto segtree_sum(const std::vector<V>& v) {
         int len;
     };
     auto make = [](V x, int) { return Node{x, 1}; };
-    auto op = [](Node a, const Node& b) { return Node{a.sum + b.sum, a.len + b.len}; };
+    auto op = [](Node a, const Node& b) {
+        return Node{a.sum + b.sum, a.len + b.len};
+    };
     auto apply = [](SimpleUpdate u, Node a) {
-        a.sum = a.sum * u.a + a.len * u.b;
+        a.sum = a.sum * u.a + (T)a.len * u.b;
         return a;
     };
     return segtree_simple_update(v, Node{0, 0}, make, op, apply);

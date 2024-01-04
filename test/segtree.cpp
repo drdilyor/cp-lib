@@ -12,9 +12,9 @@ void test_correctness(int n, int q, gen_t gen) {
     for (int i = 0; i < q; i++) {
 
         int p = rng() % n;
-        typename node_t::type x = gen();
+        auto x = gen();
         st.set(p, x);
-        arr[p] = x;
+        arr[p] = node.make(p, x);
 
         int l = rng() % n, r = rng() % (n + 1);
         if (r == n) r = l;
@@ -53,6 +53,9 @@ struct custom_node {
         res[0] = ((long long)a[0] * b[0]) % mod;
         res[1] = ((long long)a[1] * b[0] + b[1]) % mod;
         return res;
+    }
+    type make(int, type a) {
+        return a;
     }
 };
 

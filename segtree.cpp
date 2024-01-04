@@ -6,52 +6,89 @@ namespace my::segtree {
 using std::vector;
 
 struct node {
-    // lambda for e() is almost never used, so i will have to create new struct
-    // for that if needed
-    template <typename T, typename Op>
+  private:
+    template <typename T>
+    struct identity {
+        const T& operator()(int i, const T& t) const noexcept {
+            return t;
+        }
+    };
+
+  public:
+    // lambda for e() is almost never used, so i dropped its support
+    template <typename T, typename M, typename Op>
     struct custom {
+        static_assert(std::is_convertible_v<Op, std::function<T(T, T)>>);
         using type = T;
         T _e;
+        M _m;
         Op _op;
-        custom(T e, Op op) : _e(e), _op(op) {
+        custom(T e, M m, Op op) : _e(e), _m(m), _op(op) {
+        }
+        custom(T e, Op op) : _e(e), _m(identity<T>()), _op(op) {
         }
         T e() {
             return _e;
+        }
+        template <typename U>
+        T make(int i, U x) {
+            return _m(i, x);
         }
         T op(T a, T b) {
             return _op(a, b);
         }
     };
 
-    template <typename T, T id>
-    struct min {
-        using type = T;
-        T e() {
-            return id;
+    template <typename T, typename Op>
+    custom(T, Op) -> custom<T, identity<T>, Op>;
+    template <typename T, typename M, typename Op>
+    custom(T, M, Op) -> custom<T, M, Op>;
+
+  private:
+    template <typename T, T id, T c>
+    struct minmax {
+        struct type {
+            T val;
+            int i, j;
+            int cnt;
+            bool operator==(const type& o) {
+                return std::make_tuple(val, i, j, cnt) ==
+                       std::make_tuple(o.val, o.i, o.j, o.cnt);
+            };
+        };
+        type e() {
+            return {.val = id, .i = -1, .j = -1, .cnt = 0};
         }
-        T op(T a, T b) {
-            return std::min(a, b);
+        type make(int i, T x) {
+            return {.val = x, .i = i, .j = i, .cnt = 1};
+        }
+        type op(type a, type b) {
+            if (a.val == b.val) {
+                a.cnt += b.cnt;
+                if (b.i < a.i) a.i = b.i;
+                if (b.j > a.j) a.j = b.j;
+                return a;
+            }
+            return c * a.val < c * b.val ? a : b;
         }
     };
 
+  public:
     template <typename T, T id>
-    struct max {
-        using type = T;
-        T e() {
-            return id;
-        }
-        T op(T a, T b) {
-            return std::max(a, b);
-        }
-    };
+    using min = minmax<T, id, 1>;
+    template <typename T, T id>
+    using max = minmax<T, id, -1>;
 
     template <typename T = long long>
     struct sum {
         using type = T;
-        T e() {
+        type e() {
             return 0;
         }
-        T op(T a, T b) {
+        type make(int i, T x) {
+            return x;
+        }
+        type op(type a, type b) {
             return a + b;
         }
     };
@@ -71,33 +108,33 @@ template <typename T>
 class segtree {
     using S = typename T::type;
 
-    static_assert(std::is_same_v<decltype(std::declval<T>().op( //
-                                     std::declval<S>(), std::declval<S>())),
-                                 S>,
+    static_assert(std::is_convertible_v<decltype(std::mem_fn(&T::op)),
+                                        std::function<S(T&, S, S)>>,
                   "op must work as S(S, S)");
-    static_assert(std::is_same_v<decltype(std::declval<T>().e()), S>,
+    static_assert(std::is_convertible_v<decltype(std::mem_fn(&T::e)),
+                                        std::function<S(T&)>>,
                   "e must work as S()");
 
   public:
     segtree() : segtree(0) {
     }
-    explicit segtree(int n, T node = {})
-        : segtree(vector<S>(n, node.e()), node) {
+    explicit segtree(int n, T node_ = {})
+        : n(n), size(_nextPower2(n)), log(size ? __builtin_ctz(size) : 0),
+          node(node_), t(size * 2, node.e()) {
     }
-    explicit segtree(const vector<S>& a, T node = {})
-        : n(a.size()), size(_nextPower2(n)),
-          log(size ? __builtin_ctz(size) : 0), node(node),
-          t(size * 2, node.e()) {
+    template <typename U>
+    explicit segtree(const vector<U>& a, T node_ = {}) : segtree(a.size()) {
         for (int i = 0; i < n; i++)
-            t[size + i] = a[i];
+            t[size + i] = node.make(i, a[i]);
         for (int i = size - 1; i >= 1; i--)
             pull(i);
     }
 
-    void set(int p, S x) {
+    template <typename U>
+    void set(int p, const U& x) {
         assert(0 <= p && p < n);
         p += size;
-        t[p] = x;
+        t[p] = node.make(p - size, x);
         for (int i = 1; i <= log; i++)
             pull(p >> i);
     }
@@ -139,7 +176,7 @@ class segtree {
         return find_first<Acc, F, true>(l, r, a, f);
     }
 
-  private:
+    // private:
     int n = 0;
     int size = 0;
     int log = 0;

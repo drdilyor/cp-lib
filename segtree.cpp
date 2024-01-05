@@ -194,18 +194,18 @@ struct segtree {
 };
 // clang-format on
 
-struct SimpleUpdate {
+struct Stad {
     // do not construct this type except using upd_set and upd_add
     int a, b;
 };
-SimpleUpdate upd_set(int x) {
+Stad upd_set(int x) {
     return {.a = 0, .b = x};
 }
-SimpleUpdate upd_add(int x) {
+Stad upd_add(int x) {
     return {.a = 1, .b = x};
 }
-auto compose_simple_update = [](SimpleUpdate last, SimpleUpdate first) {
-    return SimpleUpdate{last.a * first.a, last.a * first.b + last.b};
+auto compose_stad = [](Stad last, Stad first) {
+    return Stad{last.a * first.a, last.a * first.b + last.b};
 };
 
 template <class Base, class Node, class Make, class Op>
@@ -216,11 +216,16 @@ auto segtree_nonlazy(const std::vector<Base>& v, Node id_node, Make make,
         v, id_node, make, op, std::monostate{}, monoapply);
 }
 
+template <class Base, class Op>
+auto segtree_simplest(const std::vector<Base>& v, Base id, Op op) {
+    return segtree_nonlazy<Base, Base>(
+        v, id, [](const Base& x, int) { return x; }, op);
+}
+
 template <class Base, class Node, class Make, class Op, class App>
-auto segtree_simple_update(const std::vector<Base>& v, Node id_node, Make make,
-                           Op op, App app) {
-    return segtree(v, id_node, make, op, SimpleUpdate{1, 0}, app,
-                   compose_simple_update);
+auto segtree_stad(const std::vector<Base>& v, Node id_node, Make make, Op op,
+                  App app) {
+    return segtree(v, id_node, make, op, Stad{1, 0}, app, compose_stad);
 }
 
 template <typename T, T id, bool ismax = false>
@@ -246,12 +251,12 @@ auto segtree_minmax(const std::vector<T>& v) {
         a.cnt += b.cnt;
         return a;
     };
-    auto apply = [](SimpleUpdate u, Node a) {
+    auto apply = [](Stad u, Node a) {
         a.val = a.val * u.a + u.b;
         return a;
     };
 
-    return segtree_simple_update(v, id_node, make, combine, apply);
+    return segtree_stad(v, id_node, make, combine, apply);
 }
 
 template <typename T, typename V>
@@ -264,20 +269,21 @@ auto segtree_sum(const std::vector<V>& v) {
     auto op = [](Node a, const Node& b) {
         return Node{a.sum + b.sum, a.len + b.len};
     };
-    auto apply = [](SimpleUpdate u, Node a) {
+    auto apply = [](Stad u, Node a) {
         a.sum = a.sum * u.a + (T)a.len * u.b;
         return a;
     };
-    return segtree_simple_update(v, Node{0, 0}, make, op, apply);
+    return segtree_stad(v, Node{0, 0}, make, op, apply);
 }
 
 } // namespace my::segtree
 
 using my::segtree::segtree;
-using my::segtree::SimpleUpdate;
-using my::segtree::segtree_simple_update;
-using my::segtree::segtree_nonlazy;
-using my::segtree::segtree_minmax;
-using my::segtree::segtree_sum;
+using my::segtree::Stad;
 using my::segtree::upd_add;
 using my::segtree::upd_set;
+using my::segtree::segtree_nonlazy;
+using my::segtree::segtree_simplest;
+using my::segtree::segtree_stad;
+using my::segtree::segtree_minmax;
+using my::segtree::segtree_sum;

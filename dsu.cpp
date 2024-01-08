@@ -1,12 +1,9 @@
 #ifdef _CLANGD
 #include <bits/stdc++.h>
 #endif
-
 namespace my::dsu {
-using std::vector;
 
 class dsu {
-
   public:
     dsu() : dsu(0) {
     }
@@ -37,8 +34,8 @@ class dsu {
     }
 
     int n;
-    vector<int> par;
-    vector<int> size;
+    std::vector<int> par;
+    std::vector<int> size;
 };
 } // namespace my::dsu
 

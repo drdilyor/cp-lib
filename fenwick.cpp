@@ -1,7 +1,6 @@
 #ifdef _CLANGD
 #include <bits/stdc++.h>
 #endif
-
 namespace my::fenwick {
 using std::vector;
 
@@ -82,7 +81,7 @@ class fenwickset {
         return f.sum(x, x);
     }
     int size() const {
-        return f.sum(0, n-1);
+        return f.sum(0, n - 1);
     }
 
     int order_of_key(int x) const {
@@ -106,7 +105,6 @@ class fenwickset {
     int n;
     fenwick<int> f;
 };
-
 } // namespace my::fenwick
 
 using my::fenwick::fenwick;

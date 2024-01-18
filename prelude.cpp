@@ -59,11 +59,15 @@ void tests(bool multi, string fileio = "") {
     preprocess();
     int t = 1;
     if (multi) cin >> t;
-    while (t-- && cin) {
+    while (t-- && cin && !cin.eof()) {
         if (solve()) break;
 #ifdef ONPC
         cout << "____________________" << endl;
         if (!multi) t = 1;
+        char c;
+        try { cin >> c; }
+        catch (ostream::failure e) { break; }
+        cin.unget();
 #endif
     }
 }

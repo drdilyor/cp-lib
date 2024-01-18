@@ -26,6 +26,9 @@ class fenwick {
     T get(int i) const {
         return sum(i, i);
     }
+    int size() const {
+        return n;
+    }
 
   private:
     int n;
